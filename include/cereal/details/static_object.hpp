@@ -71,7 +71,7 @@ namespace cereal
     };
 
     template <class T> T & StaticObject<T>::instance = StaticObject<T>::create();
-  }
+  } // namespace detail
 } // namespace cereal
 
 #endif // CEREAL_DETAILS_STATIC_OBJECT_HPP_
