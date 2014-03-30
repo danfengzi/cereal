@@ -67,7 +67,7 @@ foreach(TEST_SOURCE ${TESTS})
   if(IS_SPECIAL_TEST EQUAL -1)
     add_dependencies(coverage ${COVERAGE_TARGET})
     
-    add_executable(${COVERAGE_TARGET} ${TEST_SOURCE})
+    add_executable(${COVERAGE_TARGET} EXCLUDE_FROM_ALL ${TEST_SOURCE})
     set_target_properties(${COVERAGE_TARGET} PROPERTIES COMPILE_DEFINITIONS "BOOST_TEST_DYN_LINK;BOOST_TEST_MODULE=${COVERAGE_TARGET}")
     set_target_properties(${COVERAGE_TARGET} PROPERTIES COMPILE_FLAGS "-coverage")
     set_target_properties(${COVERAGE_TARGET} PROPERTIES LINK_FLAGS "-coverage")
