@@ -468,9 +468,9 @@ namespace cereal
       }
 
       //! Loads a bool from the current top node
-      template <class T> inline
-      typename std::enable_if<std::is_unsigned<T>::value && std::is_same<T, bool>::value, void>::type
-      loadValue( T & value )
+      template <class T, traits::EnableIf<std::is_unsigned<T>::value,
+                                          std::is_same<T, bool>::value>...> inline
+      void loadValue( T & value )
       {
         std::istringstream is( itsNodes.top().node->value() );
         is.setf( std::ios::boolalpha );
@@ -478,41 +478,45 @@ namespace cereal
       }
 
       //! Loads a type best represented as an unsigned long from the current top node
-      template <class T> inline
-      typename std::enable_if<std::is_unsigned<T>::value && !std::is_same<T, bool>::value && sizeof(T) < sizeof(long long), void>::type
-      loadValue( T & value )
+      template <class T, traits::EnableIf<std::is_unsigned<T>::value,
+                                          !std::is_same<T, bool>::value,
+                                          sizeof(T) < sizeof(long long)>...>
+      void loadValue( T & value )
       {
         value = static_cast<T>( std::stoul( itsNodes.top().node->value() ) );
       }
 
       //! Loads a type best represented as an unsigned long long from the current top node
-      template <class T> inline
-      typename std::enable_if<std::is_unsigned<T>::value && !std::is_same<T, bool>::value && sizeof(T) >= sizeof(long long), void>::type
-      loadValue( T & value )
+      template <class T, traits::EnableIf<std::is_unsigned<T>::value,
+                                          !std::is_same<T, bool>::value,
+                                          sizeof(T) >= sizeof(long long)>...>
+      void loadValue( T & value )
       {
         value = static_cast<T>( std::stoull( itsNodes.top().node->value() ) );
       }
 
       //! Loads a type best represented as an int from the current top node
-      template <class T> inline
-      typename std::enable_if<std::is_signed<T>::value && sizeof(T) <= sizeof(int), void>::type
-      loadValue( T & value )
+      template <class T, traits::EnableIf<std::is_signed<T>::value,
+                                          sizeof(T) <= sizeof(int)>...>
+      void loadValue( T & value )
       {
         value = static_cast<T>( std::stoi( itsNodes.top().node->value() ) );
       }
 
       //! Loads a type best represented as a long from the current top node
-      template <class T> inline
-      typename std::enable_if<std::is_signed<T>::value && (sizeof(T) > sizeof(int)) && (sizeof(T) <= sizeof(long)), void>::type
-      loadValue( T & value )
+      template <class T, traits::EnableIf<std::is_signed<T>::value,
+                                          (sizeof(T) > sizeof(int)),
+                                          sizeof(T) <= sizeof(long)>...>
+      void loadValue( T & value )
       {
         value = static_cast<T>( std::stol( itsNodes.top().node->value() ) );
       }
 
       //! Loads a type best represented as a long long from the current top node
-      template <class T> inline
-      typename std::enable_if<std::is_signed<T>::value && (sizeof(T) > sizeof(long)) && (sizeof(T) <= sizeof(long long)), void>::type
-      loadValue( T & value )
+      template <class T, traits::EnableIf<std::is_signed<T>::value,
+                                          (sizeof(T) > sizeof(long)),
+                                          sizeof(T) <= sizeof(long long)>...>
+      void loadValue( T & value )
       {
         value = static_cast<T>( std::stoll( itsNodes.top().node->value() ) );
       }
