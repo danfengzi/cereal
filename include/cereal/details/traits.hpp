@@ -51,15 +51,84 @@ namespace cereal
 
     namespace detail
     {
+      // ######################################################################
       //! Used to delay a static_assert until template instantiation
       template <class T>
       struct delay_static_assert : std::false_type {};
 
+      // ######################################################################
       #ifdef CEREAL_OLDER_GCC // when VS supports better SFINAE, we can use this as the default
       template<typename> struct Void { typedef void type; };
       #endif // CEREAL_OLDER_GCC
+
+      // ######################################################################
+      // Helper functionality for boolean integral constants and Enable/DisableIf
+      template <bool H, bool ... T> struct meta_bool_and : std::integral_constant<bool, H && meta_bool_and<T...>::value> {};
+      template <bool B> struct meta_bool_and<B> : std::integral_constant<bool, B> {};
+
+      template <bool H, bool ... T> struct meta_bool_or : std::integral_constant<bool, H || meta_bool_or<T...>::value> {};
+      template <bool B> struct meta_bool_or<B> : std::integral_constant<bool, B> {};
     } // namespace detail
 
+    // ######################################################################
+    //! Provides a way to enable a function if conditions are met
+    /*! This is intended to be used in a near identical fashion to std::enable_if
+        while being significantly easier to read at the cost of not allowing for as
+        complicated of a condition.
+
+        This will compile (allow the function) if every condition evaluates to true
+        at compile time.  This should be used with SFINAE to ensure that at least
+        one other candidate function works when one fails due to an EnableIf.
+
+        This should be used as the last template parameter to a function as an
+        unnamed variadic parameter:
+
+        @code{cpp}
+        // using by making the last template argument variadic
+        template <class T, EnableIf<std::is_same<T, bool>::value>...>
+        void func(T t );
+        @endcode
+
+        Note that this performs a logical AND of all conditions, so you will need
+        to construct more complicated requirements with this fact in mind.
+
+        @relates DisableIf
+        @tparam Conditions The conditions which will be logically ANDed to enable the function. */
+    template <bool ... Conditions>
+    using EnableIf = typename std::enable_if<detail::meta_bool_and<Conditions...>::value, std::true_type>::type;
+
+    // ######################################################################
+    //! Provides a way to disable a function if conditions are met
+    /*! This is intended to be used in a near identical fashion to std::enable_if
+        while being significantly easier to read at the cost of not allowing for as
+        complicated of a condition.
+
+        This will compile (allow the function) if every condition evaluates to false
+        This should be used with SFINAE to ensure that at least one other candidate
+        function works when one fails due to a DisableIf.
+
+        This should be used as the last template parameter to a function as an
+        unnamed variadic parameter:
+
+        @code{cpp}
+        // using by making the last template argument variadic
+        template <class T, DisableIf<std::is_same<T, bool>::value>...>
+        void func(T t );
+        @endcode
+
+        This is often used in conjunction with EnableIf to form an enable/disable pair of
+        overloads.
+
+        Note that this performs a logical AND of all conditions, so you will need
+        to construct more complicated requirements with this fact in mind.  If all conditions
+        hold, the function will be disabled.
+
+        @relates EnableIf
+        @tparam Conditions The conditions which will be logically ANDed to disable the function. */
+    template <class ... Conditions>
+    using DisableIf = typename std::enable_if<!detail::meta_bool_or<Conditions...>::value, std::true_type>::type;
+
+    // ######################################################################
     //! Creates a test for whether a non const member function exists
     /*! This creates a class derived from std::integral_constant that will be true if
         the type has the proper member function for the given archive. */
