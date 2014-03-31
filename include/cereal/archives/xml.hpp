@@ -480,7 +480,7 @@ namespace cereal
       //! Loads a type best represented as an unsigned long from the current top node
       template <class T, traits::EnableIf<std::is_unsigned<T>::value,
                                           !std::is_same<T, bool>::value,
-                                          sizeof(T) < sizeof(long long)>...>
+                                          sizeof(T) < sizeof(long long)>...> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stoul( itsNodes.top().node->value() ) );
@@ -489,7 +489,7 @@ namespace cereal
       //! Loads a type best represented as an unsigned long long from the current top node
       template <class T, traits::EnableIf<std::is_unsigned<T>::value,
                                           !std::is_same<T, bool>::value,
-                                          sizeof(T) >= sizeof(long long)>...>
+                                          sizeof(T) >= sizeof(long long)>...> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stoull( itsNodes.top().node->value() ) );
@@ -497,7 +497,7 @@ namespace cereal
 
       //! Loads a type best represented as an int from the current top node
       template <class T, traits::EnableIf<std::is_signed<T>::value,
-                                          sizeof(T) <= sizeof(int)>...>
+                                          sizeof(T) <= sizeof(int)>...> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stoi( itsNodes.top().node->value() ) );
@@ -506,7 +506,7 @@ namespace cereal
       //! Loads a type best represented as a long from the current top node
       template <class T, traits::EnableIf<std::is_signed<T>::value,
                                           (sizeof(T) > sizeof(int)),
-                                          sizeof(T) <= sizeof(long)>...>
+                                          sizeof(T) <= sizeof(long)>...> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stol( itsNodes.top().node->value() ) );
@@ -515,7 +515,7 @@ namespace cereal
       //! Loads a type best represented as a long long from the current top node
       template <class T, traits::EnableIf<std::is_signed<T>::value,
                                           (sizeof(T) > sizeof(long)),
-                                          sizeof(T) <= sizeof(long long)>...>
+                                          sizeof(T) <= sizeof(long long)>...> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stoll( itsNodes.top().node->value() ) );
