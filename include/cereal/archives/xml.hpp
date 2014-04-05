@@ -726,8 +726,6 @@ namespace cereal
 
       Minimal types do not start or end nodes */
   template <class T, traits::DisableIf<traits::has_minimal_output_serialization<T, XMLOutputArchive>::value> = traits::sfinae> inline
-  //template <class T> inline
-  //typename std::enable_if<!traits::has_minimal_output_serialization<T, XMLOutputArchive>::value, void>::type
   void prologue( XMLOutputArchive & ar, T const & )
   {
     ar.startNode();
@@ -736,8 +734,6 @@ namespace cereal
 
   //! Prologue for all other types for XML input archives (except minimal types)
   template <class T, traits::DisableIf<traits::has_minimal_input_serialization<T, XMLInputArchive>::value> = traits::sfinae> inline
-  //template <class T> inline
-  //typename std::enable_if<!traits::has_minimal_input_serialization<T, XMLInputArchive>::value, void>::type
   void prologue( XMLInputArchive & ar, T const & )
   {
     ar.startNode();
@@ -749,8 +745,6 @@ namespace cereal
 
       Minimal types do not start or end nodes */
   template <class T, traits::DisableIf<traits::has_minimal_output_serialization<T, XMLOutputArchive>::value> = traits::sfinae> inline
-  //template <class T> inline
-  //typename std::enable_if<!traits::has_minimal_output_serialization<T, XMLOutputArchive>::value, void>::type
   void epilogue( XMLOutputArchive & ar, T const & )
   {
     ar.finishNode();
@@ -758,8 +752,6 @@ namespace cereal
 
   //! Epilogue for all other types other for XML output archives (except minimal types)
   template <class T, traits::DisableIf<traits::has_minimal_input_serialization<T, XMLInputArchive>::value> = traits::sfinae> inline
-  //template <class T> inline
-  //typename std::enable_if<!traits::has_minimal_input_serialization<T, XMLInputArchive>::value, void>::type
   void epilogue( XMLInputArchive & ar, T const & )
   {
     ar.finishNode();
@@ -800,17 +792,15 @@ namespace cereal
 
   // ######################################################################
   //! Saving for POD types to xml
-  template<class T> inline
-  typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-  CEREAL_SAVE_FUNCTION_NAME(XMLOutputArchive & ar, T const & t)
+  template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
+  void CEREAL_SAVE_FUNCTION_NAME(XMLOutputArchive & ar, T const & t)
   {
     ar.saveValue( t );
   }
 
   //! Loading for POD types from xml
-  template<class T> inline
-  typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-  CEREAL_LOAD_FUNCTION_NAME(XMLInputArchive & ar, T & t)
+  template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
+  void CEREAL_LOAD_FUNCTION_NAME(XMLInputArchive & ar, T & t)
   {
     ar.loadValue( t );
   }
