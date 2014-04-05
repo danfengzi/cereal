@@ -240,24 +240,33 @@ namespace cereal
       // special overloads to handle these cases.
 
       //! 32 bit signed long saving to current node
-      template <class T> inline
-      typename std::enable_if<sizeof(T) == sizeof(std::int32_t) && std::is_signed<T>::value, void>::type
-      saveLong(T l){ saveValue( static_cast<std::int32_t>( l ) ); }
+      template <class T, traits::EnableIf<sizeof(T) == sizeof(std::int32_t),
+                                          std::is_signed<T>::value> = traits::sfinae> inline
+
+      // template <class T> inline
+      // typename std::enable_if<sizeof(T) == sizeof(std::int32_t) && std::is_signed<T>::value, void>::type
+      void saveLong(T l){ saveValue( static_cast<std::int32_t>( l ) ); }
 
       //! non 32 bit signed long saving to current node
-      template <class T> inline
-      typename std::enable_if<sizeof(T) != sizeof(std::int32_t) && std::is_signed<T>::value, void>::type
-      saveLong(T l){ saveValue( static_cast<std::int64_t>( l ) ); }
+      template <class T, traits::EnableIf<sizeof(T) != sizeof(std::int32_t),
+                                          std::is_signed<T>::value> = traits::sfinae> inline
+      //template <class T> inline
+      //typename std::enable_if<sizeof(T) != sizeof(std::int32_t) && std::is_signed<T>::value, void>::type
+      void saveLong(T l){ saveValue( static_cast<std::int64_t>( l ) ); }
 
       //! 32 bit unsigned long saving to current node
-      template <class T> inline
-      typename std::enable_if<sizeof(T) == sizeof(std::uint32_t) && !std::is_signed<T>::value, void>::type
-      saveLong(T lu){ saveValue( static_cast<std::uint32_t>( lu ) ); }
+      template <class T, traits::EnableIf<sizeof(T) == sizeof(std::int32_t),
+                                          std::is_unsigned<T>::value> = traits::sfinae> inline
+      //template <class T> inline
+      //typename std::enable_if<sizeof(T) == sizeof(std::uint32_t) && !std::is_signed<T>::value, void>::type
+      void saveLong(T lu){ saveValue( static_cast<std::uint32_t>( lu ) ); }
 
       //! non 32 bit unsigned long saving to current node
-      template <class T> inline
-      typename std::enable_if<sizeof(T) != sizeof(std::uint32_t) && !std::is_signed<T>::value, void>::type
-      saveLong(T lu){ saveValue( static_cast<std::uint64_t>( lu ) ); }
+      template <class T, traits::EnableIf<sizeof(T) != sizeof(std::int32_t),
+                                          std::is_unsigned<T>::value> = traits::sfinae> inline
+      //template <class T> inline
+      //typename std::enable_if<sizeof(T) != sizeof(std::uint32_t) && !std::is_signed<T>::value, void>::type
+      void saveLong(T lu){ saveValue( static_cast<std::uint64_t>( lu ) ); }
 
     public:
 #ifdef _MSC_VER
@@ -265,30 +274,42 @@ namespace cereal
       void saveValue( unsigned long lu ){ saveLong( lu ); };
 #else // _MSC_VER
       //! Serialize a long if it would not be caught otherwise
-      template <class T> inline
-      typename std::enable_if<std::is_same<T, long>::value &&
-                              !std::is_same<T, std::int32_t>::value &&
-                              !std::is_same<T, std::int64_t>::value, void>::type
-      saveValue( T t ){ saveLong( t ); }
+      template <class T, traits::EnableIf<std::is_same<T, long>::value,
+                                          !std::is_same<T, std::int32_t>::value,
+                                          !std::is_same<T, std::int64_t>::value> = traits::sfinae> inline
+      //template <class T> inline
+      //typename std::enable_if<std::is_same<T, long>::value &&
+      //                        !std::is_same<T, std::int32_t>::value &&
+      //                        !std::is_same<T, std::int64_t>::value, void>::type
+      void saveValue( T t ){ saveLong( t ); }
 
       //! Serialize an unsigned long if it would not be caught otherwise
-      template <class T> inline
-      typename std::enable_if<std::is_same<T, unsigned long>::value &&
-                              !std::is_same<T, std::uint32_t>::value &&
-                              !std::is_same<T, std::uint64_t>::value, void>::type
-      saveValue( T t ){ saveLong( t ); }
+      template <class T, traits::EnableIf<std::is_same<T, unsigned long>::value,
+                                          !std::is_same<T, std::uint32_t>::value,
+                                          !std::is_same<T, std::uint64_t>::value> = traits::sfinae> inline
+      //template <class T> inline
+      //typename std::enable_if<std::is_same<T, unsigned long>::value &&
+      //                        !std::is_same<T, std::uint32_t>::value &&
+      //                        !std::is_same<T, std::uint64_t>::value, void>::type
+      void saveValue( T t ){ saveLong( t ); }
 #endif // _MSC_VER
 
       //! Save exotic arithmetic as strings to current node
       /*! Handles long long (if distinct from other types), unsigned long (if distinct), and long double */
-      template<class T> inline
-      typename std::enable_if<std::is_arithmetic<T>::value &&
-                              !std::is_same<T, long>::value &&
-                              !std::is_same<T, unsigned long>::value &&
-                              !std::is_same<T, std::int64_t>::value &&
-                              !std::is_same<T, std::uint64_t>::value &&
-                              (sizeof(T) >= sizeof(long double) || sizeof(T) >= sizeof(long long)), void>::type
-      saveValue(T const & t)
+      template <class T, traits::EnableIf<std::is_arithmetic<T>::value,
+                                          !std::is_same<T, long>::value,
+                                          !std::is_same<T, unsigned long>::value,
+                                          !std::is_same<T, std::int64_t>::value,
+                                          !std::is_same<T, std::uint64_t>::value,
+                                          (sizeof(T) >= sizeof(long double) || sizeof(T) >= sizeof(long long))> = traits::sfinae> inline
+      //template<class T> inline
+      //typename std::enable_if<std::is_arithmetic<T>::value &&
+      //                        !std::is_same<T, long>::value &&
+      //                        !std::is_same<T, unsigned long>::value &&
+      //                        !std::is_same<T, std::int64_t>::value &&
+      //                        !std::is_same<T, std::uint64_t>::value &&
+      //                        (sizeof(T) >= sizeof(long double) || sizeof(T) >= sizeof(long long)), void>::type
+      void saveValue(T const & t)
       {
         std::stringstream ss; ss.precision( std::numeric_limits<long double>::max_digits10 );
         ss << t;
@@ -603,7 +624,7 @@ namespace cereal
       void loadValue(double & val)      { search(); val = itsIteratorStack.back().value().GetDouble(); ++itsIteratorStack.back(); }
       //! Loads a value from the current node - string overload
       void loadValue(std::string & val) { search(); val = itsIteratorStack.back().value().GetString(); ++itsIteratorStack.back(); }
-      
+
       //// TODO: This allows compilation on OS X (clang 3.3/libc++ as well as g++-4.9/libstdc++), but breaks compilation on Ubuntu.
       ////! Loads a value from the current node - 64-bit unsigned long overload
       //typename std::enable_if<(sizeof(unsigned long) == sizeof(uint64_t)) &&
