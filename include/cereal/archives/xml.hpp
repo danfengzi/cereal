@@ -469,7 +469,7 @@ namespace cereal
 
       //! Loads a bool from the current top node
       template <class T, traits::EnableIf<std::is_unsigned<T>::value,
-                                          std::is_same<T, bool>::value>...> inline
+                                          std::is_same<T, bool>::value> = traits::sfinae> inline
       void loadValue( T & value )
       {
         std::istringstream is( itsNodes.top().node->value() );
@@ -480,7 +480,7 @@ namespace cereal
       //! Loads a type best represented as an unsigned long from the current top node
       template <class T, traits::EnableIf<std::is_unsigned<T>::value,
                                           !std::is_same<T, bool>::value,
-                                          sizeof(T) < sizeof(long long)>...> inline
+                                          sizeof(T) < sizeof(long long)> = traits::sfinae> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stoul( itsNodes.top().node->value() ) );
@@ -489,7 +489,7 @@ namespace cereal
       //! Loads a type best represented as an unsigned long long from the current top node
       template <class T, traits::EnableIf<std::is_unsigned<T>::value,
                                           !std::is_same<T, bool>::value,
-                                          sizeof(T) >= sizeof(long long)>...> inline
+                                          sizeof(T) >= sizeof(long long)> = traits::sfinae> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stoull( itsNodes.top().node->value() ) );
@@ -497,7 +497,7 @@ namespace cereal
 
       //! Loads a type best represented as an int from the current top node
       template <class T, traits::EnableIf<std::is_signed<T>::value,
-                                          sizeof(T) <= sizeof(int)>...> inline
+                                          sizeof(T) <= sizeof(int)> = traits::sfinae> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stoi( itsNodes.top().node->value() ) );
@@ -506,7 +506,7 @@ namespace cereal
       //! Loads a type best represented as a long from the current top node
       template <class T, traits::EnableIf<std::is_signed<T>::value,
                                           (sizeof(T) > sizeof(int)),
-                                          sizeof(T) <= sizeof(long)>...> inline
+                                          sizeof(T) <= sizeof(long)> = traits::sfinae> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stol( itsNodes.top().node->value() ) );
@@ -515,7 +515,7 @@ namespace cereal
       //! Loads a type best represented as a long long from the current top node
       template <class T, traits::EnableIf<std::is_signed<T>::value,
                                           (sizeof(T) > sizeof(long)),
-                                          sizeof(T) <= sizeof(long long)>...> inline
+                                          sizeof(T) <= sizeof(long long)> = traits::sfinae> inline
       void loadValue( T & value )
       {
         value = static_cast<T>( std::stoll( itsNodes.top().node->value() ) );
@@ -725,18 +725,20 @@ namespace cereal
       that may be given data by the type about to be archived
 
       Minimal types do not start or end nodes */
-  template <class T> inline
-  typename std::enable_if<!traits::has_minimal_output_serialization<T, XMLOutputArchive>::value, void>::type
-  prologue( XMLOutputArchive & ar, T const & )
+  template <class T, traits::DisableIf<traits::has_minimal_output_serialization<T, XMLOutputArchive>::value> = traits::sfinae> inline
+  //template <class T> inline
+  //typename std::enable_if<!traits::has_minimal_output_serialization<T, XMLOutputArchive>::value, void>::type
+  void prologue( XMLOutputArchive & ar, T const & )
   {
     ar.startNode();
     ar.insertType<T>();
   }
 
   //! Prologue for all other types for XML input archives (except minimal types)
-  template <class T> inline
-  typename std::enable_if<!traits::has_minimal_input_serialization<T, XMLInputArchive>::value, void>::type
-  prologue( XMLInputArchive & ar, T const & )
+  template <class T, traits::DisableIf<traits::has_minimal_input_serialization<T, XMLInputArchive>::value> = traits::sfinae> inline
+  //template <class T> inline
+  //typename std::enable_if<!traits::has_minimal_input_serialization<T, XMLInputArchive>::value, void>::type
+  void prologue( XMLInputArchive & ar, T const & )
   {
     ar.startNode();
   }
@@ -746,17 +748,19 @@ namespace cereal
   /*! Finishes the node created in the prologue
 
       Minimal types do not start or end nodes */
-  template <class T> inline
-  typename std::enable_if<!traits::has_minimal_output_serialization<T, XMLOutputArchive>::value, void>::type
-  epilogue( XMLOutputArchive & ar, T const & )
+  template <class T, traits::DisableIf<traits::has_minimal_output_serialization<T, XMLOutputArchive>::value> = traits::sfinae> inline
+  //template <class T> inline
+  //typename std::enable_if<!traits::has_minimal_output_serialization<T, XMLOutputArchive>::value, void>::type
+  void epilogue( XMLOutputArchive & ar, T const & )
   {
     ar.finishNode();
   }
 
   //! Epilogue for all other types other for XML output archives (except minimal types)
-  template <class T> inline
-  typename std::enable_if<!traits::has_minimal_input_serialization<T, XMLInputArchive>::value, void>::type
-  epilogue( XMLInputArchive & ar, T const & )
+  template <class T, traits::DisableIf<traits::has_minimal_input_serialization<T, XMLInputArchive>::value> = traits::sfinae> inline
+  //template <class T> inline
+  //typename std::enable_if<!traits::has_minimal_input_serialization<T, XMLInputArchive>::value, void>::type
+  void epilogue( XMLInputArchive & ar, T const & )
   {
     ar.finishNode();
   }

@@ -57,9 +57,13 @@ namespace cereal
       struct delay_static_assert : std::false_type {};
 
       // ######################################################################
+      // SFINAE Helpers
       #ifdef CEREAL_OLDER_GCC // when VS supports better SFINAE, we can use this as the default
       template<typename> struct Void { typedef void type; };
       #endif // CEREAL_OLDER_GCC
+
+      //! Return type for SFINAE Enablers, cannot be instantiated directly
+      enum class sfinae {};
 
       // ######################################################################
       // Helper functionality for boolean integral constants and Enable/DisableIf
@@ -69,6 +73,11 @@ namespace cereal
       template <bool H, bool ... T> struct meta_bool_or : std::integral_constant<bool, H || meta_bool_or<T...>::value> {};
       template <bool B> struct meta_bool_or<B> : std::integral_constant<bool, B> {};
     } // namespace detail
+
+    //! Used as the default value for EnableIf and DisableIf template parameters
+    /*! @relates EnableIf
+        @relates DisableIf */
+    static const detail::sfinae sfinae = {};
 
     // ######################################################################
     //! Provides a way to enable a function if conditions are met
@@ -80,12 +89,12 @@ namespace cereal
         at compile time.  This should be used with SFINAE to ensure that at least
         one other candidate function works when one fails due to an EnableIf.
 
-        This should be used as the last template parameter to a function as an
-        unnamed variadic parameter:
+        This should be used as the las template parameter to a function as
+        an unnamed parameter with a default value of cereal::traits::sfinae:
 
         @code{cpp}
         // using by making the last template argument variadic
-        template <class T, EnableIf<std::is_same<T, bool>::value>...>
+        template <class T, EnableIf<std::is_same<T, bool>::value> = sfinae>
         void func(T t );
         @endcode
 
@@ -93,9 +102,10 @@ namespace cereal
         to construct more complicated requirements with this fact in mind.
 
         @relates DisableIf
+        @relates sfinae
         @tparam Conditions The conditions which will be logically ANDed to enable the function. */
     template <bool ... Conditions>
-    using EnableIf = typename std::enable_if<detail::meta_bool_and<Conditions...>::value, std::true_type>::type;
+    using EnableIf = typename std::enable_if<detail::meta_bool_and<Conditions...>::value, detail::sfinae>::type;
 
     // ######################################################################
     //! Provides a way to disable a function if conditions are met
@@ -107,12 +117,12 @@ namespace cereal
         This should be used with SFINAE to ensure that at least one other candidate
         function works when one fails due to a DisableIf.
 
-        This should be used as the last template parameter to a function as an
-        unnamed variadic parameter:
+        This should be used as the las template parameter to a function as
+        an unnamed parameter with a default value of cereal::traits::sfinae:
 
         @code{cpp}
         // using by making the last template argument variadic
-        template <class T, DisableIf<std::is_same<T, bool>::value>...>
+        template <class T, DisableIf<std::is_same<T, bool>::value> = sfinae>
         void func(T t );
         @endcode
 
@@ -124,9 +134,10 @@ namespace cereal
         hold, the function will be disabled.
 
         @relates EnableIf
+        @relates sfinae
         @tparam Conditions The conditions which will be logically ANDed to disable the function. */
-    template <class ... Conditions>
-    using DisableIf = typename std::enable_if<!detail::meta_bool_or<Conditions...>::value, std::true_type>::type;
+    template <bool ... Conditions>
+    using DisableIf = typename std::enable_if<!detail::meta_bool_or<Conditions...>::value, detail::sfinae>::type;
 
     // ######################################################################
     //! Creates a test for whether a non const member function exists
