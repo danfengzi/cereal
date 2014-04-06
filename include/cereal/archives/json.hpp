@@ -242,30 +242,21 @@ namespace cereal
       //! 32 bit signed long saving to current node
       template <class T, traits::EnableIf<sizeof(T) == sizeof(std::int32_t),
                                           std::is_signed<T>::value> = traits::sfinae> inline
-
-      // template <class T> inline
-      // typename std::enable_if<sizeof(T) == sizeof(std::int32_t) && std::is_signed<T>::value, void>::type
       void saveLong(T l){ saveValue( static_cast<std::int32_t>( l ) ); }
 
       //! non 32 bit signed long saving to current node
       template <class T, traits::EnableIf<sizeof(T) != sizeof(std::int32_t),
                                           std::is_signed<T>::value> = traits::sfinae> inline
-      //template <class T> inline
-      //typename std::enable_if<sizeof(T) != sizeof(std::int32_t) && std::is_signed<T>::value, void>::type
       void saveLong(T l){ saveValue( static_cast<std::int64_t>( l ) ); }
 
       //! 32 bit unsigned long saving to current node
       template <class T, traits::EnableIf<sizeof(T) == sizeof(std::int32_t),
                                           std::is_unsigned<T>::value> = traits::sfinae> inline
-      //template <class T> inline
-      //typename std::enable_if<sizeof(T) == sizeof(std::uint32_t) && !std::is_signed<T>::value, void>::type
       void saveLong(T lu){ saveValue( static_cast<std::uint32_t>( lu ) ); }
 
       //! non 32 bit unsigned long saving to current node
       template <class T, traits::EnableIf<sizeof(T) != sizeof(std::int32_t),
                                           std::is_unsigned<T>::value> = traits::sfinae> inline
-      //template <class T> inline
-      //typename std::enable_if<sizeof(T) != sizeof(std::uint32_t) && !std::is_signed<T>::value, void>::type
       void saveLong(T lu){ saveValue( static_cast<std::uint64_t>( lu ) ); }
 
     public:
@@ -277,20 +268,12 @@ namespace cereal
       template <class T, traits::EnableIf<std::is_same<T, long>::value,
                                           !std::is_same<T, std::int32_t>::value,
                                           !std::is_same<T, std::int64_t>::value> = traits::sfinae> inline
-      //template <class T> inline
-      //typename std::enable_if<std::is_same<T, long>::value &&
-      //                        !std::is_same<T, std::int32_t>::value &&
-      //                        !std::is_same<T, std::int64_t>::value, void>::type
       void saveValue( T t ){ saveLong( t ); }
 
       //! Serialize an unsigned long if it would not be caught otherwise
       template <class T, traits::EnableIf<std::is_same<T, unsigned long>::value,
                                           !std::is_same<T, std::uint32_t>::value,
                                           !std::is_same<T, std::uint64_t>::value> = traits::sfinae> inline
-      //template <class T> inline
-      //typename std::enable_if<std::is_same<T, unsigned long>::value &&
-      //                        !std::is_same<T, std::uint32_t>::value &&
-      //                        !std::is_same<T, std::uint64_t>::value, void>::type
       void saveValue( T t ){ saveLong( t ); }
 #endif // _MSC_VER
 
@@ -302,13 +285,6 @@ namespace cereal
                                           !std::is_same<T, std::int64_t>::value,
                                           !std::is_same<T, std::uint64_t>::value,
                                           (sizeof(T) >= sizeof(long double) || sizeof(T) >= sizeof(long long))> = traits::sfinae> inline
-      //template<class T> inline
-      //typename std::enable_if<std::is_arithmetic<T>::value &&
-      //                        !std::is_same<T, long>::value &&
-      //                        !std::is_same<T, unsigned long>::value &&
-      //                        !std::is_same<T, std::int64_t>::value &&
-      //                        !std::is_same<T, std::uint64_t>::value &&
-      //                        (sizeof(T) >= sizeof(long double) || sizeof(T) >= sizeof(long long)), void>::type
       void saveValue(T const & t)
       {
         std::stringstream ss; ss.precision( std::numeric_limits<long double>::max_digits10 );
@@ -590,9 +566,9 @@ namespace cereal
       }
 
       //! Loads a value from the current node - small signed overload
-      template<class T> inline
-      typename std::enable_if<std::is_signed<T>::value && sizeof(T) < sizeof(int64_t), void>::type
-      loadValue(T & val)
+      template <class T, traits::EnableIf<std::is_signed<T>::value,
+                                          sizeof(T) < sizeof(int64_t)> = traits::sfinae> inline
+      void loadValue(T & val)
       {
         search();
 
@@ -601,10 +577,10 @@ namespace cereal
       }
 
       //! Loads a value from the current node - small unsigned overload
-      template<class T> inline
-      typename std::enable_if<(std::is_unsigned<T>::value && sizeof(T) < sizeof(uint64_t)) &&
-                              !std::is_same<bool, T>::value, void>::type
-      loadValue(T & val)
+      template <class T, traits::EnableIf<std::is_unsigned<T>::value,
+                                          sizeof(T) < sizeof(uint64_t),
+                                          !std::is_same<bool, T>::value> = traits::sfinae> inline
+      void loadValue(T & val)
       {
         search();
 
@@ -649,14 +625,13 @@ namespace cereal
 
     public:
       //! Loads a value from the current node - long double and long long overloads
-      template<class T> inline
-      typename std::enable_if<std::is_arithmetic<T>::value &&
-                              !std::is_same<T, long>::value &&
-                              !std::is_same<T, unsigned long>::value &&
-                              !std::is_same<T, std::int64_t>::value &&
-                              !std::is_same<T, std::uint64_t>::value &&
-                              (sizeof(T) >= sizeof(long double) || sizeof(T) >= sizeof(long long)), void>::type
-      loadValue(T & val)
+      template <class T, traits::EnableIf<std::is_arithmetic<T>::value,
+                                          !std::is_same<T, long>::value,
+                                          !std::is_same<T, unsigned long>::value,
+                                          !std::is_same<T, std::int64_t>::value,
+                                          !std::is_same<T, std::uint64_t>::value,
+                                          (sizeof(T) >= sizeof(long double) || sizeof(T) >= sizeof(long long))> = traits::sfinae>
+      inline void loadValue(T & val)
       {
         std::string encoded;
         loadValue( encoded );
@@ -740,19 +715,23 @@ namespace cereal
       that may be given data by the type about to be archived
 
       Minimal types do not start or finish nodes */
-  template <class T> inline
-  typename std::enable_if<!std::is_arithmetic<T>::value &&
-                          !traits::has_minimal_output_serialization<T, JSONOutputArchive>::value, void>::type
-  prologue( JSONOutputArchive & ar, T const & )
+  template <class T, traits::DisableIf<std::is_arithmetic<T>::value ||
+                                       traits::has_minimal_output_serialization<T, JSONOutputArchive>::value> = traits::sfinae>
+  //template <class T> inline
+  //typename std::enable_if<!std::is_arithmetic<T>::value &&
+  //                        !traits::has_minimal_output_serialization<T, JSONOutputArchive>::value, void>::type
+  inline void prologue( JSONOutputArchive & ar, T const & )
   {
     ar.startNode();
   }
 
   //! Prologue for all other types for JSON archives
-  template <class T> inline
-  typename std::enable_if<!std::is_arithmetic<T>::value &&
-                          !traits::has_minimal_input_serialization<T, JSONOutputArchive>::value, void>::type
-  prologue( JSONInputArchive & ar, T const & )
+  template <class T, traits::DisableIf<std::is_arithmetic<T>::value ||
+                                       traits::has_minimal_input_serialization<T, JSONInputArchive>::value> = traits::sfinae>
+  //template <class T> inline
+  //typename std::enable_if<!std::is_arithmetic<T>::value &&
+  //                        !traits::has_minimal_input_serialization<T, JSONOutputArchive>::value, void>::type
+  inline void prologue( JSONInputArchive & ar, T const & )
   {
     ar.startNode();
   }
@@ -762,49 +741,57 @@ namespace cereal
   /*! Finishes the node created in the prologue
 
       Minimal types do not start or finish nodes */
-  template <class T> inline
-  typename std::enable_if<!std::is_arithmetic<T>::value &&
-                          !traits::has_minimal_output_serialization<T, JSONOutputArchive>::value, void>::type
-  epilogue( JSONOutputArchive & ar, T const & )
+  template <class T, traits::DisableIf<std::is_arithmetic<T>::value ||
+                                       traits::has_minimal_output_serialization<T, JSONOutputArchive>::value> = traits::sfinae>
+  //template <class T> inline
+  //typename std::enable_if<!std::is_arithmetic<T>::value &&
+  //                        !traits::has_minimal_output_serialization<T, JSONOutputArchive>::value, void>::type
+  inline void epilogue( JSONOutputArchive & ar, T const & )
   {
     ar.finishNode();
   }
 
   //! Epilogue for all other types other for JSON archives
-  template <class T> inline
-  typename std::enable_if<!std::is_arithmetic<T>::value &&
-                          !traits::has_minimal_input_serialization<T, JSONOutputArchive>::value, void>::type
-  epilogue( JSONInputArchive & ar, T const & )
+  template <class T, traits::DisableIf<std::is_arithmetic<T>::value ||
+                                       traits::has_minimal_input_serialization<T, JSONInputArchive>::value> = traits::sfinae>
+  //template <class T> inline
+  //typename std::enable_if<!std::is_arithmetic<T>::value &&
+  //                        !traits::has_minimal_input_serialization<T, JSONOutputArchive>::value, void>::type
+  inline void epilogue( JSONInputArchive & ar, T const & )
   {
     ar.finishNode();
   }
 
   // ######################################################################
   //! Prologue for arithmetic types for JSON archives
-  template <class T> inline
-  typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-  prologue( JSONOutputArchive & ar, T const & )
+  //template <class T> inline
+  template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
+  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
+  void prologue( JSONOutputArchive & ar, T const & )
   {
     ar.writeName();
   }
 
   //! Prologue for arithmetic types for JSON archives
-  template <class T> inline
-  typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-  prologue( JSONInputArchive &, T const & )
+  //template <class T> inline
+  template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
+  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
+  void prologue( JSONInputArchive &, T const & )
   { }
 
   // ######################################################################
   //! Epilogue for arithmetic types for JSON archives
-  template <class T> inline
-  typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-  epilogue( JSONOutputArchive &, T const & )
+  //template <class T> inline
+  template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
+  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
+  void epilogue( JSONOutputArchive &, T const & )
   { }
 
   //! Epilogue for arithmetic types for JSON archives
-  template <class T> inline
-  typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-  epilogue( JSONInputArchive &, T const & )
+  //template <class T> inline
+  template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
+  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
+  void epilogue( JSONInputArchive &, T const & )
   { }
 
   // ######################################################################
@@ -851,17 +838,19 @@ namespace cereal
   }
 
   //! Saving for arithmetic to JSON
-  template<class T> inline
-  typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-  CEREAL_SAVE_FUNCTION_NAME(JSONOutputArchive & ar, T const & t)
+  template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
+  //template<class T> inline
+  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
+  void CEREAL_SAVE_FUNCTION_NAME(JSONOutputArchive & ar, T const & t)
   {
     ar.saveValue( t );
   }
 
   //! Loading arithmetic from JSON
-  template<class T> inline
-  typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-  CEREAL_LOAD_FUNCTION_NAME(JSONInputArchive & ar, T & t)
+  template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
+  //template<class T> inline
+  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
+  void CEREAL_LOAD_FUNCTION_NAME(JSONInputArchive & ar, T & t)
   {
     ar.loadValue( t );
   }

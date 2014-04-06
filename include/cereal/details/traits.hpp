@@ -62,7 +62,7 @@ namespace cereal
       template<typename> struct Void { typedef void type; };
       #endif // CEREAL_OLDER_GCC
 
-      //! Return type for SFINAE Enablers, cannot be instantiated directly
+      //! Return type for SFINAE Enablers
       enum class sfinae {};
 
       // ######################################################################
@@ -72,6 +72,14 @@ namespace cereal
 
       template <bool H, bool ... T> struct meta_bool_or : std::integral_constant<bool, H || meta_bool_or<T...>::value> {};
       template <bool B> struct meta_bool_or<B> : std::integral_constant<bool, B> {};
+
+      // workaround needed due to bug in MSVC 2013, see
+      // http://connect.microsoft.com/VisualStudio/feedback/details/800231/c-11-alias-template-issue
+      template <bool ... Conditions>
+      struct EnableIfHelper : std::enable_if<meta_bool_and<Conditions...>::value, sfinae> {};
+
+      template <bool ... Conditions>
+      struct DisableIfHelper : std::enable_if<!meta_bool_or<Conditions...>::value, sfinae> {};
     } // namespace detail
 
     //! Used as the default value for EnableIf and DisableIf template parameters
@@ -85,7 +93,7 @@ namespace cereal
         while being significantly easier to read at the cost of not allowing for as
         complicated of a condition.
 
-        This will compile (allow the function) if every condition evaluates to true
+        This will compile (allow the function) if every condition evaluates to true.
         at compile time.  This should be used with SFINAE to ensure that at least
         one other candidate function works when one fails due to an EnableIf.
 
@@ -105,7 +113,7 @@ namespace cereal
         @relates sfinae
         @tparam Conditions The conditions which will be logically ANDed to enable the function. */
     template <bool ... Conditions>
-    using EnableIf = typename std::enable_if<detail::meta_bool_and<Conditions...>::value, detail::sfinae>::type;
+    using EnableIf = typename detail::EnableIfHelper<Conditions...>::type;
 
     // ######################################################################
     //! Provides a way to disable a function if conditions are met
@@ -113,7 +121,7 @@ namespace cereal
         while being significantly easier to read at the cost of not allowing for as
         complicated of a condition.
 
-        This will compile (allow the function) if every condition evaluates to false
+        This will compile (allow the function) if every condition evaluates to false.
         This should be used with SFINAE to ensure that at least one other candidate
         function works when one fails due to a DisableIf.
 
@@ -137,7 +145,7 @@ namespace cereal
         @relates sfinae
         @tparam Conditions The conditions which will be logically ANDed to disable the function. */
     template <bool ... Conditions>
-    using DisableIf = typename std::enable_if<!detail::meta_bool_or<Conditions...>::value, detail::sfinae>::type;
+    using DisableIf = typename detail::DisableIfHelper<Conditions...>::type;
 
     // ######################################################################
     //! Creates a test for whether a non const member function exists
