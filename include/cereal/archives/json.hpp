@@ -717,9 +717,6 @@ namespace cereal
       Minimal types do not start or finish nodes */
   template <class T, traits::DisableIf<std::is_arithmetic<T>::value ||
                                        traits::has_minimal_output_serialization<T, JSONOutputArchive>::value> = traits::sfinae>
-  //template <class T> inline
-  //typename std::enable_if<!std::is_arithmetic<T>::value &&
-  //                        !traits::has_minimal_output_serialization<T, JSONOutputArchive>::value, void>::type
   inline void prologue( JSONOutputArchive & ar, T const & )
   {
     ar.startNode();
@@ -728,9 +725,6 @@ namespace cereal
   //! Prologue for all other types for JSON archives
   template <class T, traits::DisableIf<std::is_arithmetic<T>::value ||
                                        traits::has_minimal_input_serialization<T, JSONInputArchive>::value> = traits::sfinae>
-  //template <class T> inline
-  //typename std::enable_if<!std::is_arithmetic<T>::value &&
-  //                        !traits::has_minimal_input_serialization<T, JSONOutputArchive>::value, void>::type
   inline void prologue( JSONInputArchive & ar, T const & )
   {
     ar.startNode();
@@ -743,9 +737,6 @@ namespace cereal
       Minimal types do not start or finish nodes */
   template <class T, traits::DisableIf<std::is_arithmetic<T>::value ||
                                        traits::has_minimal_output_serialization<T, JSONOutputArchive>::value> = traits::sfinae>
-  //template <class T> inline
-  //typename std::enable_if<!std::is_arithmetic<T>::value &&
-  //                        !traits::has_minimal_output_serialization<T, JSONOutputArchive>::value, void>::type
   inline void epilogue( JSONOutputArchive & ar, T const & )
   {
     ar.finishNode();
@@ -754,9 +745,6 @@ namespace cereal
   //! Epilogue for all other types other for JSON archives
   template <class T, traits::DisableIf<std::is_arithmetic<T>::value ||
                                        traits::has_minimal_input_serialization<T, JSONInputArchive>::value> = traits::sfinae>
-  //template <class T> inline
-  //typename std::enable_if<!std::is_arithmetic<T>::value &&
-  //                        !traits::has_minimal_input_serialization<T, JSONOutputArchive>::value, void>::type
   inline void epilogue( JSONInputArchive & ar, T const & )
   {
     ar.finishNode();
@@ -764,33 +752,25 @@ namespace cereal
 
   // ######################################################################
   //! Prologue for arithmetic types for JSON archives
-  //template <class T> inline
   template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
-  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
   void prologue( JSONOutputArchive & ar, T const & )
   {
     ar.writeName();
   }
 
   //! Prologue for arithmetic types for JSON archives
-  //template <class T> inline
   template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
-  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
   void prologue( JSONInputArchive &, T const & )
   { }
 
   // ######################################################################
   //! Epilogue for arithmetic types for JSON archives
-  //template <class T> inline
   template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
-  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
   void epilogue( JSONOutputArchive &, T const & )
   { }
 
   //! Epilogue for arithmetic types for JSON archives
-  //template <class T> inline
   template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
-  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
   void epilogue( JSONInputArchive &, T const & )
   { }
 
@@ -839,8 +819,6 @@ namespace cereal
 
   //! Saving for arithmetic to JSON
   template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
-  //template<class T> inline
-  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
   void CEREAL_SAVE_FUNCTION_NAME(JSONOutputArchive & ar, T const & t)
   {
     ar.saveValue( t );
@@ -848,8 +826,6 @@ namespace cereal
 
   //! Loading arithmetic from JSON
   template <class T, traits::EnableIf<std::is_arithmetic<T>::value> = traits::sfinae> inline
-  //template<class T> inline
-  //typename std::enable_if<std::is_arithmetic<T>::value, void>::type
   void CEREAL_LOAD_FUNCTION_NAME(JSONInputArchive & ar, T & t)
   {
     ar.loadValue( t );
