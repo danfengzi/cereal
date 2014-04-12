@@ -358,67 +358,56 @@ namespace cereal
         return *self;
       }
 
+      //! Helper macro that expands the requirements for activating an overload
+      #define PROCESS_IF(name)                                                                   \
+      traits::EnableIf<traits::has_##name<T, ArchiveType>::value,                                \
+                       !traits::has_invalid_output_versioning<T, ArchiveType>::value,            \
+                       (traits::is_specialized_##name<T, ArchiveType>::value ||          \
+                        traits::is_output_serializable<T, ArchiveType>::value)> = traits::sfinae
+
       //! Member serialization
-      template <class T> inline
-      typename std::enable_if<traits::has_member_serialize<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_member_serialize<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(member_serialize)> inline
+      ArchiveType & processImpl(T const & t)
       {
         access::member_serialize(*self, const_cast<T &>(t));
         return *self;
       }
 
       //! Non member serialization
-      template <class T> inline
-      typename std::enable_if<traits::has_non_member_serialize<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_non_member_serialize<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(non_member_serialize)> inline
+      ArchiveType & processImpl(T const & t)
       {
         CEREAL_SERIALIZE_FUNCTION_NAME(*self, const_cast<T &>(t));
         return *self;
       }
 
       //! Member split (save)
-      template <class T> inline
-      typename std::enable_if<traits::has_member_save<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_member_save<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(member_save)> inline
+      ArchiveType & processImpl(T const & t)
       {
         access::member_save(*self, t);
         return *self;
       }
 
       //! Non member split (save)
-      template <class T> inline
-      typename std::enable_if<traits::has_non_member_save<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_non_member_save<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(non_member_save)> inline
+      ArchiveType & processImpl(T const & t)
       {
         CEREAL_SAVE_FUNCTION_NAME(*self, t);
         return *self;
       }
 
       //! Member split (save_minimal)
-      template <class T> inline
-      typename std::enable_if<traits::has_member_save_minimal<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_member_save_minimal<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(member_save_minimal)> inline
+      ArchiveType & processImpl(T const & t)
       {
         self->process( access::member_save_minimal(*self, t) );
         return *self;
       }
 
       //! Non member split (save_minimal)
-      template <class T> inline
-      typename std::enable_if<traits::has_non_member_save_minimal<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_non_member_save_minimal<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(non_member_save_minimal)> inline
+      ArchiveType & processImpl(T const & t)
       {
         self->process( CEREAL_SAVE_MINIMAL_FUNCTION_NAME(*self, t) );
         return *self;
@@ -472,11 +461,8 @@ namespace cereal
 
       //! Member serialization
       /*! Versioning implementation */
-      template <class T> inline
-      typename std::enable_if<traits::has_member_versioned_serialize<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_member_serialize<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(member_versioned_serialize)> inline
+      ArchiveType & processImpl(T const & t)
       {
         registerClassVersion<T>( detail::Version<T>::version );
         access::member_serialize(*self, const_cast<T &>(t), detail::Version<T>::version);
@@ -485,11 +471,8 @@ namespace cereal
 
       //! Non member serialization
       /*! Versioning implementation */
-      template <class T> inline
-      typename std::enable_if<traits::has_non_member_versioned_serialize<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_non_member_serialize<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(non_member_versioned_serialize)> inline
+      ArchiveType & processImpl(T const & t)
       {
         registerClassVersion<T>( detail::Version<T>::version );
         CEREAL_SERIALIZE_FUNCTION_NAME(*self, const_cast<T &>(t), detail::Version<T>::version);
@@ -498,11 +481,8 @@ namespace cereal
 
       //! Member split (save)
       /*! Versioning implementation */
-      template <class T> inline
-      typename std::enable_if<traits::has_member_versioned_save<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_member_save<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(member_versioned_save)> inline
+      ArchiveType & processImpl(T const & t)
       {
         registerClassVersion<T>( detail::Version<T>::version );
         access::member_save(*self, t, detail::Version<T>::version);
@@ -511,11 +491,8 @@ namespace cereal
 
       //! Non member split (save)
       /*! Versioning implementation */
-      template <class T> inline
-      typename std::enable_if<traits::has_non_member_versioned_save<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_non_member_save<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(non_member_versioned_save)> inline
+      ArchiveType & processImpl(T const & t)
       {
         registerClassVersion<T>( detail::Version<T>::version );
         CEREAL_SAVE_FUNCTION_NAME(*self, t, detail::Version<T>::version);
@@ -524,11 +501,8 @@ namespace cereal
 
       //! Member split (save_minimal)
       /*! Versioning implementation */
-      template <class T> inline
-      typename std::enable_if<traits::has_member_versioned_save_minimal<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_member_save_minimal<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(member_versioned_save_minimal)> inline
+      ArchiveType & processImpl(T const & t)
       {
         registerClassVersion<T>( detail::Version<T>::version );
         self->process( access::member_save_minimal(*self, t, detail::Version<T>::version) );
@@ -537,16 +511,15 @@ namespace cereal
 
       //! Non member split (save_minimal)
       /*! Versioning implementation */
-      template <class T> inline
-      typename std::enable_if<traits::has_non_member_versioned_save_minimal<T, ArchiveType>::value && !traits::has_invalid_output_versioning<T, ArchiveType>::value &&
-                              (traits::is_specialized_non_member_save_minimal<T, ArchiveType>::value || traits::is_output_serializable<T, ArchiveType>::value),
-                              ArchiveType &>::type
-      processImpl(T const & t)
+      template <class T, PROCESS_IF(non_member_versioned_save_minimal)> inline
+      ArchiveType & processImpl(T const & t)
       {
         registerClassVersion<T>( detail::Version<T>::version );
         self->process( CEREAL_SAVE_MINIMAL_FUNCTION_NAME(*self, t, detail::Version<T>::version) );
         return *self;
       }
+
+    #undef PROCESS_IF
 
     private:
       ArchiveType * const self;

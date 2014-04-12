@@ -1039,31 +1039,22 @@ namespace cereal
     // ######################################################################
     namespace detail
     {
-      template <class T, class A>
-      struct is_specialized_member_serialize : std::integral_constant<bool,
-        !std::is_base_of<std::false_type, specialize<A, T, specialization::member_serialize>>::value> {};
+      //! Create a test for a cereal::specialization entry
+      #define CEREAL_MAKE_IS_SPECIALIZED_IMPL(name)                                          \
+      template <class T, class A>                                                            \
+      struct is_specialized_##name : std::integral_constant<bool,                            \
+        !std::is_base_of<std::false_type, specialize<A, T, specialization::name>>::value> {}
 
-      template <class T, class A>
-      struct is_specialized_member_load_save : std::integral_constant<bool,
-        !std::is_base_of<std::false_type, specialize<A, T, specialization::member_load_save>>::value> {};
+      CEREAL_MAKE_IS_SPECIALIZED_IMPL(member_serialize);
+      CEREAL_MAKE_IS_SPECIALIZED_IMPL(member_load_save);
+      CEREAL_MAKE_IS_SPECIALIZED_IMPL(member_load_save_minimal);
+      CEREAL_MAKE_IS_SPECIALIZED_IMPL(non_member_serialize);
+      CEREAL_MAKE_IS_SPECIALIZED_IMPL(non_member_load_save);
+      CEREAL_MAKE_IS_SPECIALIZED_IMPL(non_member_load_save_minimal);
 
-      template <class T, class A>
-      struct is_specialized_member_load_save_minimal : std::integral_constant<bool,
-        !std::is_base_of<std::false_type, specialize<A, T, specialization::member_load_save_minimal>>::value> {};
+      #undef CEREAL_MAKE_IS_SPECIALIZED_IMPL
 
-      template <class T, class A>
-      struct is_specialized_non_member_serialize : std::integral_constant<bool,
-        !std::is_base_of<std::false_type, specialize<A, T, specialization::non_member_serialize>>::value> {};
-
-      template <class T, class A>
-      struct is_specialized_non_member_load_save : std::integral_constant<bool,
-        !std::is_base_of<std::false_type, specialize<A, T, specialization::non_member_load_save>>::value> {};
-
-      template <class T, class A>
-      struct is_specialized_non_member_load_save_minimal : std::integral_constant<bool,
-        !std::is_base_of<std::false_type, specialize<A, T, specialization::non_member_load_save_minimal>>::value> {};
-
-      // Considered an error if specialization exists for more than one type
+      //! Considered an error if specialization exists for more than one type
       template <class T, class A>
       struct is_specialized_error : std::integral_constant<bool,
         (is_specialized_member_serialize<T, A>::value +
@@ -1074,6 +1065,7 @@ namespace cereal
          is_specialized_non_member_load_save_minimal<T, A>::value) <= 1> {};
     } // namespace detail
 
+    //! Check if any specialization exists for a type
     template <class T, class A>
     struct is_specialized : std::integral_constant<bool,
       detail::is_specialized_member_serialize<T, A>::value ||
@@ -1086,105 +1078,43 @@ namespace cereal
       static_assert(detail::is_specialized_error<T, A>::value, "More than one explicit specialization detected for type.");
     };
 
-    template <class T, class A>
-    struct is_specialized_member_serialize : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_member_serialize<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_member_serialize<T, A>::value &&
-                     (has_member_serialize<T, A>::value || has_member_versioned_serialize<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_member_serialize<T, A>::value),
-                     "cereal detected member serialization specialization but no member serialize function" );
-    };
+    //! Create the static assertion for some specialization
+    /*! This assertion will fail if the type is indeed specialized and does not have the appropriate
+        type of serialization functions */
+    #define CEREAL_MAKE_IS_SPECIALIZED_ASSERT(name, versioned_name, print_name, spec_name)                      \
+    static_assert( (is_specialized<T, A>::value && detail::is_specialized_##spec_name<T, A>::value &&           \
+                   (has_##name<T, A>::value || has_##versioned_name<T, A>::value))                              \
+                   || !(is_specialized<T, A>::value && detail::is_specialized_##spec_name<T, A>::value),        \
+                   "cereal detected " #print_name " specialization but no " #print_name " serialize function" )
 
-    template <class T, class A>
-    struct is_specialized_member_load : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_member_load_save<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_member_load_save<T, A>::value &&
-                     (has_member_load<T, A>::value || has_member_versioned_load<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_member_load_save<T, A>::value),
-                     "cereal detected member load specialization but no member load function" );
-    };
+    //! Generates a test for specialization for versioned and unversioned functions
+    /*! This creates checks that can be queried to see if a given type of serialization function
+        has been specialized for this type */
+    #define CEREAL_MAKE_IS_SPECIALIZED(name, versioned_name, spec_name)                     \
+    template <class T, class A>                                                             \
+    struct is_specialized_##name : std::integral_constant<bool,                             \
+      is_specialized<T, A>::value && detail::is_specialized_##spec_name<T, A>::value>       \
+    { CEREAL_MAKE_IS_SPECIALIZED_ASSERT(name, versioned_name, name, spec_name); };          \
+    template <class T, class A>                                                             \
+    struct is_specialized_##versioned_name : std::integral_constant<bool,                   \
+      is_specialized<T, A>::value && detail::is_specialized_##spec_name<T, A>::value>       \
+    { CEREAL_MAKE_IS_SPECIALIZED_ASSERT(name, versioned_name, versioned_name, spec_name); }
 
-    template <class T, class A>
-    struct is_specialized_member_save : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_member_load_save<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_member_load_save<T, A>::value &&
-                     (has_member_save<T, A>::value || has_member_versioned_save<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_member_load_save<T, A>::value),
-                     "cereal detected member save specialization but no member save function" );
-    };
+    CEREAL_MAKE_IS_SPECIALIZED(member_serialize, member_versioned_serialize, member_serialize);
+    CEREAL_MAKE_IS_SPECIALIZED(non_member_serialize, non_member_versioned_serialize, non_member_serialize);
 
-    template <class T, class A>
-    struct is_specialized_member_load_minimal : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_member_load_save_minimal<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_member_load_save_minimal<T, A>::value &&
-                     (has_member_load_minimal<T, A>::value || has_member_versioned_load_minimal<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_member_load_save_minimal<T, A>::value),
-                     "cereal detected member load_minimal specialization but no member load_minimal function" );
-    };
+    CEREAL_MAKE_IS_SPECIALIZED(member_save, member_versioned_save, member_load_save);
+    CEREAL_MAKE_IS_SPECIALIZED(non_member_save, non_member_versioned_save, non_member_load_save);
+    CEREAL_MAKE_IS_SPECIALIZED(member_load, member_versioned_load, member_load_save);
+    CEREAL_MAKE_IS_SPECIALIZED(non_member_load, non_member_versioned_load, non_member_load_save);
 
-    template <class T, class A>
-    struct is_specialized_member_save_minimal : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_member_load_save_minimal<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_member_load_save_minimal<T, A>::value &&
-                     (has_member_save_minimal<T, A>::value || has_member_versioned_save_minimal<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_member_load_save_minimal<T, A>::value),
-                     "cereal detected member save_minimal specialization but no member save_minimal function" );
-    };
+    CEREAL_MAKE_IS_SPECIALIZED(member_save_minimal, member_versioned_save_minimal, member_load_save_minimal);
+    CEREAL_MAKE_IS_SPECIALIZED(non_member_save_minimal, non_member_versioned_save_minimal, non_member_load_save_minimal);
+    CEREAL_MAKE_IS_SPECIALIZED(member_load_minimal, member_versioned_load_minimal, member_load_save_minimal);
+    CEREAL_MAKE_IS_SPECIALIZED(non_member_load_minimal, non_member_versioned_load_minimal, non_member_load_save_minimal);
 
-    template <class T, class A>
-    struct is_specialized_non_member_serialize : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_non_member_serialize<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_non_member_serialize<T, A>::value &&
-                     (has_non_member_serialize<T, A>::value || has_non_member_versioned_serialize<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_non_member_serialize<T, A>::value),
-                     "cereal detected non-member serialization specialization but no non-member serialize function" );
-    };
-
-    template <class T, class A>
-    struct is_specialized_non_member_load : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_non_member_load_save<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_non_member_load_save<T, A>::value &&
-                     (has_non_member_load<T, A>::value || has_non_member_versioned_load<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_non_member_load_save<T, A>::value),
-                     "cereal detected non-member load specialization but no non-member load function" );
-    };
-
-    template <class T, class A>
-    struct is_specialized_non_member_save : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_non_member_load_save<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_non_member_load_save<T, A>::value &&
-                     (has_non_member_save<T, A>::value || has_non_member_versioned_save<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_non_member_load_save<T, A>::value),
-                     "cereal detected non-member save specialization but no non-member save function" );
-    };
-
-    template <class T, class A>
-    struct is_specialized_non_member_load_minimal : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_non_member_load_save_minimal<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_non_member_load_save_minimal<T, A>::value &&
-                     (has_non_member_load_minimal<T, A>::value || has_non_member_versioned_load_minimal<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_non_member_load_save_minimal<T, A>::value),
-                     "cereal detected non-member load specialization but no non-member load function" );
-    };
-
-    template <class T, class A>
-    struct is_specialized_non_member_save_minimal : std::integral_constant<bool,
-      is_specialized<T, A>::value && detail::is_specialized_non_member_load_save_minimal<T, A>::value>
-    {
-      static_assert( (is_specialized<T, A>::value && detail::is_specialized_non_member_load_save_minimal<T, A>::value &&
-                     (has_non_member_save_minimal<T, A>::value || has_non_member_versioned_save_minimal<T, A>::value))
-                     || !(is_specialized<T, A>::value && detail::is_specialized_non_member_load_save_minimal<T, A>::value),
-                     "cereal detected non-member save specialization but no non-member save function" );
-    };
+    #undef CEREAL_MAKE_IS_SPECIALIZED_ASSERT
+    #undef CEREAL_MAKE_IS_SPECIALIZED
 
     // ######################################################################
     // detects if a type has any active minimal output serialization
